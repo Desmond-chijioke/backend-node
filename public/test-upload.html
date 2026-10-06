@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Update User Profile</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 40px 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h2 {
+      font-size: 20px;
+      color: #111;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #111;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input:focus {
+      border-color: #4f46e5;
+    }
+
+    .file-wrapper {
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: border 0.2s;
+    }
+
+    .file-wrapper:hover { border-color: #4f46e5; }
+
+    .file-wrapper input[type="file"] {
+      display: none;
+    }
+
+    .file-wrapper p {
+      font-size: 13px;
+      color: #888;
+      margin-top: 8px;
+    }
+
+    #preview {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: none;
+      margin: 0 auto 8px;
+      border: 2px solid #4f46e5;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button[type="submit"]:hover { background: #4338ca; }
+    button[type="submit"]:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    #response {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+
+    #response.success {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      color: #166534;
+    }
+
+    #response.error {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+    }
+
+    #response pre {
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-family: monospace;
+      margin-top: 8px;
+    }
+
+    .profile-img-wrap {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    #savedProfilePic {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #4f46e5;
+      display: none;
+    }
+
+    .section-divider {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #aaa;
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Update User Profile</h2>
+
+    <form id="updateForm">
+
+      <p class="section-divider">Auth</p>
+
+      <label for="token">Bearer Token</label>
+      <input type="text" id="token" placeholder="Paste your access token here" />
+
+      <label for="userId">User ID</label>
+      <input type="text" id="userId" placeholder="MongoDB ObjectId of the user" />
+
+      <p class="section-divider">Profile Details</p>
+
+      <label for="name">Name</label>
+      <input type="text" id="name" placeholder="Full name" />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Email address" />
+
+      <label for="age">Age</label>
+      <input type="number" id="age" placeholder="Age" />
+
+      <p class="section-divider">Profile Picture</p>
+
+      <div class="file-wrapper" onclick="document.getElementById('profilePicture').click()">
+        <img id="preview" src="" alt="Preview" />
+        <p id="fileLabel">Click to choose an image (jpg, png, webp — max 2MB)</p>
+        <input type="file" id="profilePicture" accept="image/jpeg,image/png,image/webp" />
+      </div>
+
+      <button type="submit" id="submitBtn">Update Profile</button>
+    </form>
+
+    <div id="response">
+      <strong id="responseTitle"></strong>
+      <pre id="responseBody"></pre>
+      <div class="profile-img-wrap">
+        <img id="savedProfilePic" src="" alt="Saved profile picture" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Show image preview when file is selected
+    document.getElementById('profilePicture').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      document.getElementById('fileLabel').textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const preview = document.getElementById('preview');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Submit handler
+    document.getElementById('updateForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const token  = document.getElementById('token').value.trim();
+      const userId = document.getElementById('userId').value.trim();
+      const name   = document.getElementById('name').value.trim();
+      const email  = document.getElementById('email').value.trim();
+      const age    = document.getElementById('age').value.trim();
+      const file   = document.getElementById('profilePicture').files[0];
+
+      if (!token || !userId) {
+        showResponse(false, { message: 'Bearer token and User ID are required.' });
+        return;
+      }
+
+      const formData = new FormData();
+      if (name)  formData.append('name', name);
+      if (email) formData.append('email', email);
+      if (age)   formData.append('age', age);
+      if (file)  formData.append('profilePicture', file);
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Updating...';
+
+      try {
+        const res = await fetch(`/api/users/${userId}`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        const data = await res.json();
+        showResponse(res.ok, data);
+
+        // If successful and a profile picture URL came back, show it
+        if (res.ok && data.data?.profilePicture) {
+          const pic = document.getElementById('savedProfilePic');
+          pic.src = data.data.profilePicture;
+          pic.style.display = 'block';
+        }
+      } catch (err) {
+        showResponse(false, { message: 'Network error: ' + err.message });
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Update Profile';
+      }
+    });
+
+    function showResponse(success, data) {
+      const box = document.getElementById('response');
+      const title = document.getElementById('responseTitle');
+      const body = document.getElementById('responseBody');
+
+      box.style.display = 'block';
+      box.className = success ? 'success' : 'error';
+      title.textContent = success ? 'Updated successfully' : 'Error';
+      body.textContent = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>
